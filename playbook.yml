@@ -1,0 +1,9 @@
+---
+- name: Install web app
+  hosts: all
+  become: yes
+  become_user: root
+ 
+
+  roles:
+    - { role: deploy_web_app, when ansible_system == 'Linux' }

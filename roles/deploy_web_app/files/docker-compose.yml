@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+    container_name: php
+    restart: always
+    volumes:
+      - './src:/var/www/html'
+    networks:
+      - app_network
+    depends_on:
+      - mysql
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+    volumes:
+      - './src:/var/www/html'
+      - './nginx/conf:/etc/nginx/conf.d'
+    networks:
+      - app_network
+    depends_on:
+      - php
+
+  mysql:
+    image: mysql:8.1.0 
+    container_name: mysql
+    restart: always
+    volumes:
+      - './volume/mysql:/var/lib/mysql/'
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.144.0/20
+          gateway: 192.168.144.1

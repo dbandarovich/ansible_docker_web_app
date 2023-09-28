@@ -1,0 +1,68 @@
+---
+# tasks install docker and docker-compose
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+        
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: true
+     
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu jammy stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce=5:24.0.0-1~ubuntu.22.04~jammy
+        state: present
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Download specific version of Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.20.3/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      become: yes
+
+    - name: copy Nginx site1
+      template:
+        src: "vhost.j2"
+        dest: "/root/nginx/conf/{{ item.server_name }}.conf"
+      with_items:
+        - {server_name: "site1.com", port: "80"}
+
+    - name: Copy files to remote server
+      copy:
+        src: roles/deploy_web_app/files/
+        dest: /root/
+      become: yes
+
+    - name: Run Docker-compose
+      become: True
+      shell:
+        cmd: "docker-compose up -d"
+        chdir: /root/
+
